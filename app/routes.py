@@ -1,5 +1,7 @@
 from app import application
 from time import time, ctime
+import sys
+import csv
 
 
 @application.route('/')
@@ -12,6 +14,14 @@ def index():
 # in the fps genre
 # we will
 @application.route('/YoutubeRequest')
-def timeDisplay():
-    t = time()
-    return ctime(t)
+def ReadSteamCsv():
+    toReturn = ""
+    with open("steam_games.csv", "r", encoding="utf-8") as csvfile:
+        reader = csv.DictReader(csvfile)
+        i = 0
+        for row in reader:
+            toReturn += row["name"]
+            i += 1
+            if i > 100:
+                break
+    print(toReturn)

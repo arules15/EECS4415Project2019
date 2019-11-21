@@ -9,7 +9,7 @@ for windows: flaskenv\Scripts\activate
 for unix: source venv/bin/activate
 
 after the virtual environment has been started, run the following 2 commands to start the flask server 
-export FLASK_APP=microblog.py
+export FLASK_APP=server.py
 flask run
 
 the server will become available at localhost:5000
