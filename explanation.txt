@@ -1,0 +1,30 @@
+Resource links
+1.https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-i-hello-world
+2.https://blog.miguelgrinberg.com/post/designing-a-restful-api-with-python-and-flask
+
+how to start the flask server
+to start the flask server, one needs to do 2 things
+1. start the python venv: in a terminal, navigate to the project directory and run the following command
+for windows: flaskenv\Scripts\activate
+for unix: source venv/bin/activate
+
+after the virtual environment has been started, run the following 2 commands to start the flask server 
+export FLASK_APP=microblog.py
+flask run
+
+the server will become available at localhost:5000
+
+How to edit files
+our main file will be the routes file, this file will recieve api requests with data to run analysis with
+Example of handling a request in flask
+
+@application.route('/Handler/<int:QueryStringFromApplication>', methods=['GET'])
+def handlingFunction(QueryStringFromApplication):
+    #pass parameters to some function and use jsonify to convert to JSON string and return to application
+the @ symbol will invoke the function directly below it when the api endpoint /Handler/<int:QueryStringFromApplication> 
+gets hit wih a get request, the <int:QueryStringFromApplication> portion is our way of specifying that this endpoint expects
+to recieve a integer as input, which we can then pass to our function as a parameter
+
+The Idea is to have a seperate file handling each specific task (youtube queries, steam queries, steam dataset operations etc.) So that everything isnt just in one file, we'll then import those files into the routes file and call there functions neatly
+
+Hopefully more will be added to this document as we discover more about flask

@@ -5,4 +5,4 @@ import numpy as np
 
 df = pd.read_csv("steam_games.csv")
 
-print (df.head(10))
+print(df.head(10))
