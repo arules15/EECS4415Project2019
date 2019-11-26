@@ -1,6 +1,6 @@
 #!/usr/bin/python
+
 import csv
-import re
 
 def wordOccurences (col, csvx):
     occur = dict()
@@ -21,8 +21,8 @@ gamesReviews = []
 with open ('steam_games.csv',encoding="utf-8") as csv_file:
     csv_reader = csv.DictReader(csv_file, delimiter=',')
     for i,row in enumerate(csv_reader):
-        if i > 10:
-            break
+        # if i > 50:
+        #     break
 
         # row names: url, types, name, desc_snippet, recent_reviews, all_reviews,
         # release_date, developer, publisher, popular_tags, game_details,
@@ -59,15 +59,18 @@ with open ('steam_games.csv',encoding="utf-8") as csv_file:
             recent_review_list = [reviewCount_recent, percentage_recent]
 
         if row['original_price']:
-            x = re.search("[$]*",row['original_price'])
-            if x is True:
-                dollerSign, Price = row['original_price'].split('$')
+            row['original_price'].lower()
+            if "$" in row['original_price']:
+                Price = row['original_price'].replace('$','')
                 amount = float(Price)
-                print(amount)
+                row['original_price'] = amount
+            else:
+                row['original_price'] = row['original_price'].replace(row['original_price'],'Free')
+            
 
-        # gamesReviews.append([row['name'], reviewCount, percentage, recent_review_list,
-        #                         row['developer'], row['publisher'], row['popular_tags'],
-        #                         row['game_details'], row['genre'], row['original_price']])
+        gamesReviews.append([row['name'], reviewCount, percentage, recent_review_list,
+                                row['developer'], row['publisher'], row['popular_tags'],
+                                row['game_details'], row['genre'], row['original_price']])
 
         
 genreOccur = sorted(genreOccur.items(), key=lambda x: x[1], reverse=True)
