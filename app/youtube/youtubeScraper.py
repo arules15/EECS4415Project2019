@@ -9,6 +9,7 @@ from csv import writer
 # Given a search query and a page range will extract video results to results.csv
 # Set the query at line 69 and the page range at line 68
 
+
 class YoutubeScrape(object):
     """ Scraper object to hold data """
 
@@ -19,7 +20,8 @@ class YoutubeScrape(object):
         self.poster = self.parse_string('.yt-user-info')
         self.views = self.parse_int('.watch-view-count')
         self.published = self.parse_string('.watch-time-text')
-        self.published = re.sub(r'(Published|Uploaded) on', '', self.published).strip()
+        self.published = re.sub(
+            r'(Published|Uploaded) on', '', self.published).strip()
         self.like = self.parse_int('.yt-uix-clickcard', 4)
         self.dislike = self.parse_int('.yt-uix-clickcard', 5)
 
@@ -65,7 +67,8 @@ def getLink(search, page):
 
 
 el = []
-for page in range(1, 10):       # set the (min to max-1) page numbers of results that you would like to scrape from youtube
+# set the (min to max-1) page numbers of results that you would like to scrape from youtube
+for page in range(1, 10):
     search = "fortnite"         # set your youtube search query
     link = getLink(search, page)
 
@@ -114,4 +117,6 @@ with open('results.csv', 'w', encoding="utf-8") as csv_file:
             views = more_data.views
             published = more_data.published
 
-            csv_writer.writerow([name, full_link, likes, dislikes, views, published])  # write to csv row
+            # write to csv row
+            csv_writer.writerow(
+                [name, full_link, likes, dislikes, views, published])

@@ -1,7 +1,13 @@
 from app import application
 from time import time, ctime
+#from youtube.youtubeScraper import YoutubeScrape
+#from app.youtube.youtubeScraper import YoutubeScrape
+#from app import steamproject
 import sys
 import csv
+import flask
+from flask import make_response
+from flask import jsonify
 
 
 @application.route('/')
@@ -13,15 +19,17 @@ def index():
 # for example, say a user wants to run an analysis on the like/dislike ratio of yotube videos in relation to the top 50 games
 # in the fps genre
 # we will
-@application.route('/YoutubeRequest')
-def ReadSteamCsv():
-    toReturn = ""
-    with open("steam_games.csv", "r", encoding="utf-8") as csvfile:
-        reader = csv.DictReader(csvfile)
-        i = 0
-        for row in reader:
-            toReturn += row["name"]
-            i += 1
-            if i > 100:
-                break
-    print(toReturn)
+@application.route('/GenreRequest/<string:Genre>', methods=['GET'])
+def ReadSteamCsv(Genre):
+
+    # use the steamproject file to obtain top 10 games in a list, pass this list onto the youyube scraping function
+    # to obtain the like/dislike ratio and other data about the genre, send this back in json to the
+    # UI application for processing
+    message = {
+        'status': 200,
+        'message': 'Ok',
+        'Genre': Genre
+        # 'like-dislike_ratio': """like dislike ratio dictionary"""
+    }
+
+    return jsonify(message)
