@@ -2,11 +2,14 @@ Resource links
 1.https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-i-hello-world
 2.https://blog.miguelgrinberg.com/post/designing-a-restful-api-with-python-and-flask
 
-how to start the flask server
-to start the flask server, one needs to do 2 things
-1. start the python venv: in a terminal, navigate to the project directory and run the following command
-for windows: flaskenv\Scripts\activate
-for unix: source venv/bin/activate
+To install all dependencies first install pipenv by running `pip install pipenv` and then in the project folder type `pipenv install` to install all project lobraries and the dev enviornment. then you can use pipenv just like pip to install and uninstall libraries. Use `pipenv run python file.py` to run a script in the enviornment. Open the dev enviornment using `pipenv shell`
+
+//depreciated?
+//how to start the flask server
+//to start the flask server, one needs to do 2 things
+//1. start the python venv: in a terminal, navigate to the project directory and run the following command
+//for windows: flaskenv\Scripts\activate
+//for unix: source venv/bin/activate
 
 after the virtual environment has been started, run the following 2 commands to start the flask server 
 export FLASK_APP=server.py
