@@ -69,8 +69,8 @@ def getLink(search, page):
 
 
 el = []
-for page in range(25, 30):       # set the (min to max-1) page numbers of results that you would like to scrape from youtube
-    search = "csgo"         # set your youtube search query
+for page in range(1, 30):       # set the (min to max-1) page numbers of results that you would like to scrape from youtube
+    search = "minecraft"         # set your youtube search query
     link = getLink(search, page)
 
     # Scrape the link
@@ -100,7 +100,7 @@ for page in range(25, 30):       # set the (min to max-1) page numbers of result
 # sys.stdout.flush()
 
 
-with open('results.csv', 'a', encoding="utf-8") as csv_file:
+with open('minecraft.csv', 'a', encoding="utf-8") as csv_file:
     csv_writer = writer(csv_file)
     headers = ['Name', 'Link', 'Likes', 'Dislikes', 'Views', 'Published']
     csv_writer.writerow(headers)
