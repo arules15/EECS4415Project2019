@@ -2,7 +2,7 @@ from app import application
 from time import time, ctime
 #from youtube.youtubeScraper import YoutubeScrape
 #from app.youtube.youtubeScraper import YoutubeScrape
-#from app import steamproject
+from app import steamproject
 import sys
 import csv
 import flask
@@ -25,11 +25,13 @@ def ReadSteamCsv(Genre):
     # use the steamproject file to obtain top 10 games in a list, pass this list onto the youyube scraping function
     # to obtain the like/dislike ratio and other data about the genre, send this back in json to the
     # UI application for processing
+    toReturn = steamproject.main()
+    toReturn2 = steamproject.wordOccurences(8, toReturn, 10)
     message = {
         'status': 200,
         'message': 'Ok',
-        'Genre': Genre
-        # 'like-dislike_ratio': """like dislike ratio dictionary"""
+        'Genre': Genre,
+        "Pls-Work": toReturn2  # 'like-dislike_ratio': """like dislike ratio dictionary"""
     }
 
     return jsonify(message)
