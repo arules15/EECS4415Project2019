@@ -4,6 +4,10 @@ import csv
 from datetime import datetime
 from pprint import pprint
 import re
+import matplotlib.pyplot as plt
+plt.rcdefaults()
+import matplotlib.pyplot as plt
+import numpy as np
 
 def wordOccurences (col, list, amount):
     occur = dict()
@@ -163,15 +167,30 @@ popList = main(0)
 popListPaid = main(1)
 popListFree = main(2)
 
+
+
 # print("List of Valve Games ordered from Release Date")
 # pprint (gameDateDevCorr('Valve', popList))
 # print("List of Bluehole, Inc. Games ordered from Release Date")
 # pprint (gameDateDevCorr('Bluehole, Inc.', popList))
 
-# genreTotal = wordOccurences(8, popList, 100)
+genreTotal = wordOccurences(8, popList, 100)
 # print("TOP 100 games genre paid and free")
 # print(genreTotal)
 # print('\n')
+
+# y_pos = np.arange(len(genreTotal))
+objects = list(genreTotal)
+objects, performance = zip(*objects)
+# plt.bar(range(len(genreTotal)), list(genreTotal.value()), align='center', alpha=0.8)
+# plt.xticks(range(len(genreTotal)), list(genreTotal.key()))
+y_pos = np.arange(len(objects))
+plt.bar(y_pos, performance, align='center', alpha=0.5)
+plt.xticks(y_pos, objects)
+plt.ylabel('positive review in percentage')
+plt.title('DevloperGames rating')
+plt.show()
+
 
 # genreTotalPaid = wordOccurences(8, popListPaid, 100)
 # print("TOP 100 games genre paid")
