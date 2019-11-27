@@ -20,8 +20,12 @@ class YoutubeScrape(object):
         self.views = self.parse_int('.watch-view-count')
         self.published = self.parse_string('.watch-time-text')
         self.published = re.sub(r'(Published|Uploaded) on', '', self.published).strip()
-        self.like = self.parse_int('.yt-uix-clickcard', 4)
-        self.dislike = self.parse_int('.yt-uix-clickcard', 5)
+        for b in soup.findAll('button', attrs={'title': 'I like this'}):
+            self.like = int(re.sub('[^0-9]', '', b.text))
+            break
+        for b in soup.findAll('button', attrs={'title': 'I dislike this'}):
+            self.dislike = int(re.sub('[^0-9]', '', b.text))
+            break
 
     def parse_int(self, selector, pos=0):
         """ Extract one integer element from soup """
@@ -65,8 +69,8 @@ def getLink(search, page):
 
 
 el = []
-for page in range(1, 10):       # set the (min to max-1) page numbers of results that you would like to scrape from youtube
-    search = "fortnite"         # set your youtube search query
+for page in range(25, 30):       # set the (min to max-1) page numbers of results that you would like to scrape from youtube
+    search = "csgo"         # set your youtube search query
     link = getLink(search, page)
 
     # Scrape the link
@@ -96,7 +100,7 @@ for page in range(1, 10):       # set the (min to max-1) page numbers of results
 # sys.stdout.flush()
 
 
-with open('results.csv', 'w', encoding="utf-8") as csv_file:
+with open('results.csv', 'a', encoding="utf-8") as csv_file:
     csv_writer = writer(csv_file)
     headers = ['Name', 'Link', 'Likes', 'Dislikes', 'Views', 'Published']
     csv_writer.writerow(headers)
@@ -108,7 +112,10 @@ with open('results.csv', 'w', encoding="utf-8") as csv_file:
             name = x.get_text()
             partial_link = x['href']
             full_link = "https://www.youtube.com" + partial_link
-            more_data = scrape_url(full_link)
+            try:
+                more_data = scrape_url(full_link)
+            except:
+                continue
             likes = more_data.like
             dislikes = more_data.dislike
             views = more_data.views
