@@ -1,3 +1,10 @@
+
+import "https://code.highcharts.com/highcharts.js";
+import "https://code.highcharts.com/modules/series-label.js";
+import "https://code.highcharts.com/modules/exporting.js";
+import "https://code.highcharts.com/modules/export-data.js";
+import "https://unpkg.com/axios/dist/axios.min.js";
+
 Highcharts.chart(document.getElementById('container'), {
 
     title: {
@@ -61,3 +68,4 @@ Highcharts.chart(document.getElementById('container'), {
     }
 
 });
+
