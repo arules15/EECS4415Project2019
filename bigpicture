@@ -1,0 +1,50 @@
+
+
+For each genre we want to include:
+- Get list of 6 most popular games for each genre
+
+FPS
+- csgo
+- cod
+- ..
+
+Battle Royale
+- pubg
+- fortnite
+- ..
+
+Youtube:
+for each game in genre:
+ - scrape youtube videos
+ for each month:
+    - if video is from that month then
+        - compute like-dislike ratio, calculate new average
+        - get the views of the video, calculate new average
+ - at the end we have a table: game, month, avg like/dislike, avg views
+
+then combine all the averages of all the games for each column to get this table:
+genre, month, avg views, avg like/dislike
+
+We can graph avg views over time, like/dislike over time, avg views over like/dislike
+
+Pcgamer:
+for each month:
+ for each article in that month: (pass 1)
+    - get word count of all games mentioned and save it for later
+    - we now have a table of article word counts: month, game1wc, game2wc, game3wc
+ calculate total word counts for each game for each month
+ for each article in that month: (pass 2)
+    - we now have the table from pass 1 and the total word counts for each game for each month
+    - get sentiment value for each article
+    for each game:
+        - game sentiment += (gamewc in article) / (total word count for all articles in month) * article sentiment
+    - we now have a table: game, month, sentiment
+    - sum up the sentiment of all games in genre.
+genre, month, avg sentiment,
+
+In total we have the following:
+
+genre, month, avg views, avg like/dislike, avg pcgamer sentiment
+
+Kaggle:
+somehow combine findings with the above!
