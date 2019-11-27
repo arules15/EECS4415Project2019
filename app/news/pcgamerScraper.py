@@ -26,8 +26,8 @@ def scrape_news(month, year):
             title = tag.text
             url = tag.a.get('href')
             content = scrape_article(url)
-            print(str(month) + '/' + str(year), title, url, content)
-            csv_writer.writerow([str(month) + '/' + str(year), title, url, content])  # write to csv row
+            # print(str(month) + '/' + str(year), title, url, content)
+            csv_writer.writerow([str(month) + '/' + str(year), title.strip(), url, content.strip()])  # write to csv row
 
 
-scrape_news(1, 2019)
+scrape_news(11, 2019)
