@@ -21,35 +21,37 @@ ssc = StreamingContext(sc, 2)
 ssc.checkpoint("checkpoint_TwitterApp")
 # read data from port 9009 and port 9010
 youtubeDataStream = ssc.socketTextStream("twitter", 9009)
-newsDataStream = ssc.socketTextStream("twitter", 9010)
+# newsDataStream = ssc.socketTextStream("twitter", 9010)
 
+# combined = youtubeDataStream.union(newsDataStream)
+# print(combined)
 
-# TODO: Do RDD aggregations here... and Modify the two functions below
-
-
-# GOAL: In the results list we send to the dashboard, we want results containing the following aggregated data:
-# <date, genre, %likes, avgViews, newsWordCount, avgNewsSentiment> - possibly more in the future
-# either like this or maybe in HighCharts format:
-# dates = []            the month/year of the data
-# genres = []           genre
-# likes = []            percentage of likes
-# views = []            average views
-# ....
-def send_results_to_dashboard(df):
-    top_tags = []
-    tags_count = []
-    # extract the hashtags from dataframe and convert them into array
-    # extract the counts from dataframe and convert them into array
-    for tag in df:
-        top_tags.append(tag[0])
-        tags_count.append(tag[1])
-    # initialize and send the data through REST API
-    url = 'http://host.docker.internal:5001/updateData'
-    request_data = {'label': str(top_tags), 'data': str(tags_count)}
-    response = requests.post(url, data=request_data)
-
-
-# process a single time interval
+# # TODO: Do RDD aggregations here... and Modify the two functions below
+#
+#
+# # GOAL: In the results list we send to the dashboard, we want results containing the following aggregated data:
+# # <date, genre, %likes, avgViews, newsWordCount, avgNewsSentiment> - possibly more in the future
+# # either like this or maybe in HighCharts format:
+# # dates = []            the month/year of the data
+# # genres = []           genre
+# # likes = []            percentage of likes
+# # views = []            average views
+# # ....
+# def send_results_to_dashboard(df):
+#     top_tags = []
+#     tags_count = []
+#     # extract the hashtags from dataframe and convert them into array
+#     # extract the counts from dataframe and convert them into array
+#     for tag in df:
+#         top_tags.append(tag[0])
+#         tags_count.append(tag[1])
+#     # initialize and send the data through REST API
+#     url = 'http://host.docker.internal:5001/updateData'
+#     request_data = {'label': str(top_tags), 'data': str(tags_count)}
+#     response = requests.post(url, data=request_data)
+#
+#
+# # process a single time interval
 def process_interval(time, rdd):
     # print a separator
     print("----------- %s -----------" % str(time))
@@ -68,12 +70,13 @@ def process_interval(time, rdd):
         # # print(str(overall_averages))
         # top10 = list(map(lambda k: (k[0], k[1] / k[2] if k[2] > 0 else 0), overall_averages))
         # # print it nicely
-        results = list()
-        for tag in results:
-            print('{:<40} {}'.format(tag[0], tag[1]))
-
+        for el in rdd.collect():
+            print(el)
+        # results = list()
+        # for tag in results:
+        #     print('{:<40} {}'.format(tag[0], tag[1]))
         # call this method to prepare top 10 hashtags DF and send them
-        send_results_to_dashboard(results)
+        # send_results_to_dashboard(results)
     except:
         e = sys.exc_info()[0]
         print("Error: %s" % e)
@@ -81,7 +84,7 @@ def process_interval(time, rdd):
 
 # do this for every single interval
 youtubeDataStream.foreachRDD(process_interval)
-newsDataStream.foreachRDD(process_interval)
+# newsDataStream.foreachRDD(process_interval)
 
 # start the streaming computation
 ssc.start()

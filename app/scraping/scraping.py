@@ -1,8 +1,9 @@
 import multiprocessing as mp
+import logging
 import socket
 import pandas as pd
 import datetime as dt
-from app.scraping.youtubeScraper import scrape_youtube
+from youtubeScraper import scrape_youtube
 import time
 
 # Get current month and year, format: 012018
@@ -16,6 +17,8 @@ genres = []                 # list of genres to get data for. Empty means all ge
 youtube_videos_per_game = 200
 
 if __name__ == '__main__':
+    logger = mp.log_to_stderr()
+    logger.setLevel(logging.INFO)
     # ==== setup local connection(s) to spark aggregator ====
     # IP and port of local machine or Docker
     TCP_IP = socket.gethostbyname(socket.gethostname())  # returns local IP
@@ -38,6 +41,8 @@ if __name__ == '__main__':
 
     # ==== Invoke Scrapers ====
     killEvent = mp.Event()  # event that causes both scrapers to save progress, shut down and terminate
+    killEvent.clear()
+    print(str(killEvent.is_set()))
     queue = mp.Queue()      # used to pass connection to spark to processes so they can send data
     p1 = mp.Process(target=scrape_youtube, args=(queue, youtube_videos_per_game, killEvent))
     # p2 = mp.Process(target=scrape_news, args=(queue1, data_from, data_to, killEvent))

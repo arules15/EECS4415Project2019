@@ -85,12 +85,12 @@ def scrape_youtube(queue, videos_per_game, kill_event):
     # for each game in the dataset, scrape videos about those games
     games_df = pd.read_csv("steam_games.csv")
     for row in games_df.itertuples():
-        el = []
-        number_of_videos_scraped = 0
-
         def scrape(page):
-            global el
-            global number_of_videos_scraped
+            print('Worker:'+str(page))
+            sys.stdout.flush()
+            nonlocal el
+            nonlocal number_of_videos_scraped
+            nonlocal conn
             search = row.name         # set your youtube search query      row.genre.split(',') for genres of row
             link = getLink(search, page)
 
@@ -103,7 +103,9 @@ def scrape_youtube(queue, videos_per_game, kill_event):
 
             # Convert scrape results to JSON
             for x in el:
-                if kill_event.is_set:
+                if kill_event.is_set():
+                    print("Shutdown Triggered, breaking out of scraping loop...")
+                    sys.stdout.flush()
                     break
                 if number_of_videos_scraped < videos_per_game:
                     if x.has_attr('title'):
@@ -117,26 +119,35 @@ def scrape_youtube(queue, videos_per_game, kill_event):
                                 continue
                             scraped_videos.add(partial_link)
                             number_of_videos_scraped += 1
-                            # if number_of_videos_scraped % 10 == 0:
-                            #     print(number_of_videos_scraped+" videos scraped")
+                            if number_of_videos_scraped % 10 == 0:
+                                print(str(number_of_videos_scraped)+" videos scraped")
+                                sys.stdout.flush()
                             likes = more_data.like
                             dislikes = more_data.dislike
                             views = more_data.views
                             published = more_data.published
-                            result = json.dumps({"Name": name, "Link": full_link, "Likes": likes, "Dislikes": dislikes, "Views": views, "Published":published})
+                            result = json.dumps({"date": published, "genre": row.genre.split(','), "Name": row.name, "Likes": likes, "Dislikes": dislikes, "Views": views})
+                            print(result)
+                            sys.stdout.flush()
                             try:
-                                conn.send(str.encode(result + '\n'))
-                            except:
+                                conn.sendall(str.encode(result + '\n'))
+                            except Exception:
+                                print("send error")
+                                sys.stdout.flush()
                                 e = sys.exc_info()[0]
                                 print("Error: %s" % e)
+                                sys.stdout.flush()
                                 break
                             # TODO send result json to spark
+        el = []
+        number_of_videos_scraped = 0
         pg = 1
         while number_of_videos_scraped < videos_per_game and not kill_event.is_set():
             scrape(pg)
             pg += 1
         if kill_event.is_set:
-            print("Youtube Scraper: saving links and exiting...")
+            print("Youtube Scraper: shutting down, saving links and exiting...")
+            sys.stdout.flush()
             break
 
     # record set of previously scraped videos to file for next time
