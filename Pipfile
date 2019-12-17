@@ -10,6 +10,7 @@ requests = "*"
 beautifulsoup4 = "*"
 pandas = "*"
 flask = "*"
+bs4 = "*"
 
 [requires]
 python_version = "3.6"

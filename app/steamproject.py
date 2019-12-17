@@ -4,6 +4,10 @@ import csv
 from datetime import datetime
 from pprint import pprint
 import re
+import matplotlib.pyplot as plt
+plt.rcdefaults()
+import matplotlib.pyplot as plt
+import numpy as np
 
 def wordOccurences (col, list, amount):
     occur = dict()
@@ -58,6 +62,26 @@ def gameDateDevCorr(name, list):
     # return sortedDevList
     return simpleList
 
+# def getGames(list):
+#     gameList = []
+#     for row in list:
+#         gameList.append(row[0])
+#     return gameList
+
+# Choose which rows to filter from the whole list
+# 0 = game name, 1 = Review Count, 2 = Percentage of Review Count, 3 = Recent Review List, 4 = Developers
+# 5 = Publisher, 6 = Game Tags, 7 = Game Details, 8 = Genre, 9 = Price, 10 = Release Date
+# Example getRows(list, 0, 1, 9) will give you the game name, review count and price
+def getRows(list, *row):
+    newList = []
+    rowVal = []
+    for i in list:
+        for x in row:
+            rowVal.append(i[int(x)])
+        newList.append(rowVal)
+        rowVal = []
+    return newList
+
 def main(var):
     gamesReviews = []
     with open ('steam_games.csv') as csv_file:
@@ -83,6 +107,7 @@ def main(var):
 
             if 'Need more user reviews to generate a score' in row['all_reviews']:
                 continue
+
             if row['all_reviews']:
                 splitterReview1 = row['all_reviews'].split(',(')
                 splitterReview2 = splitterReview1[1].split(')')
@@ -100,7 +125,7 @@ def main(var):
                 percentageReview_recent= extra1_recent.split(' ')
                 percentage_recent = percentageReview_recent[0]
                 recent_review_list = [reviewCount_recent, percentage_recent]
-
+            
             if row['original_price']:
                 row['original_price'].lower()
                 if "$" in row['original_price']:
@@ -109,6 +134,9 @@ def main(var):
                     row['original_price'] = amount
                 else:
                     row['original_price'] = row['original_price'].replace(row['original_price'],'Free')
+
+            if 'Downloadable Content' in row['game_details']:
+                continue
 
             if var == 1:
                 if str(row['original_price']) in 'Free':
@@ -138,15 +166,31 @@ def main(var):
 popList = main(0)
 popListPaid = main(1)
 popListFree = main(2)
+
+
+
 # print("List of Valve Games ordered from Release Date")
 # pprint (gameDateDevCorr('Valve', popList))
-# print("List of CCP Games ordered from Release Date")
-# pprint (gameDateDevCorr('CCP', popList))
+# print("List of Bluehole, Inc. Games ordered from Release Date")
+# pprint (gameDateDevCorr('Bluehole, Inc.', popList))
 
-# genreTotal = wordOccurences(8, popList, 100)
+genreTotal = wordOccurences(8, popList, 100)
 # print("TOP 100 games genre paid and free")
 # print(genreTotal)
 # print('\n')
+
+# y_pos = np.arange(len(genreTotal))
+objects = list(genreTotal)
+objects, performance = zip(*objects)
+# plt.bar(range(len(genreTotal)), list(genreTotal.value()), align='center', alpha=0.8)
+# plt.xticks(range(len(genreTotal)), list(genreTotal.key()))
+y_pos = np.arange(len(objects))
+plt.bar(y_pos, performance, align='center', alpha=0.5)
+plt.xticks(y_pos, objects)
+plt.ylabel('positive review in percentage')
+plt.title('DevloperGames rating')
+plt.show()
+
 
 # genreTotalPaid = wordOccurences(8, popListPaid, 100)
 # print("TOP 100 games genre paid")
@@ -187,8 +231,19 @@ popListFree = main(2)
 # print("TOP 100 games tags free")
 # print(tagsTotalFree)
 # print('\n')
+# print('\n')
+# print(getRows(popList, 0, 1))
 
-for i,x in enumerate(popList):
-    print(x)
-    if i > 10:
-        break
+# print("Top games Paid/Free")
+# for i,x in enumerate(getGames(popList)):
+#     print(x)
+#     if i >= 9:
+#         print('\n')
+#         break
+# print('\n')
+# print("Testing rows")
+# for i,x in enumerate(getRows(popList, 0, 1, 9)):
+#     print(x)
+#     if i >= 9:
+#         print('\n')
+#         break
