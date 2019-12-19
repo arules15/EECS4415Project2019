@@ -7,6 +7,7 @@ import json
 import ast
 import pandas as pd
 import sys
+import datetime
 
 # Youtube Scraper!
 # A combination of https://github.com/dave2000sang/Youtube-Search-Scraper and
@@ -86,12 +87,12 @@ def scrape_youtube(queue, videos_per_game, kill_event):
     games_df = pd.read_csv("steam_games.csv")
     for row in games_df.itertuples():
         def scrape(page):
-            print('Worker:'+str(page))
+            print('Youtube Scraper: Working on page:'+str(page))
             sys.stdout.flush()
             nonlocal el
             nonlocal number_of_videos_scraped
             nonlocal conn
-            search = row.name         # set your youtube search query      row.genre.split(',') for genres of row
+            search = row.name         # set your youtube search query
             link = getLink(search, page)
 
             # Scrape the link
@@ -104,7 +105,7 @@ def scrape_youtube(queue, videos_per_game, kill_event):
             # Convert scrape results to JSON
             for x in el:
                 if kill_event.is_set():
-                    print("Shutdown Triggered, breaking out of scraping loop...")
+                    print("Youtube Scraper: Shutdown Triggered, breaking out of scraping loop...")
                     sys.stdout.flush()
                     break
                 if number_of_videos_scraped < videos_per_game:
@@ -120,32 +121,33 @@ def scrape_youtube(queue, videos_per_game, kill_event):
                             scraped_videos.add(partial_link)
                             number_of_videos_scraped += 1
                             if number_of_videos_scraped % 10 == 0:
-                                print(str(number_of_videos_scraped)+" videos scraped")
+                                print(str(number_of_videos_scraped)+" youtube videos scraped")
                                 sys.stdout.flush()
                             likes = more_data.like
                             dislikes = more_data.dislike
                             views = more_data.views
                             published = more_data.published
-                            result = json.dumps({"date": published, "genre": row.genre.split(','), "Name": row.name, "Likes": likes, "Dislikes": dislikes, "Views": views})
+                            date = published.lower().replace(',', '')
+                            date_pub = datetime.datetime.strptime(date, "%b %d %Y")
+                            result = json.dumps({"month": date_pub.strftime("%m"), "year": date_pub.strftime("%Y"), "genre": row.genre.split(','), "name": row.name, "likes": likes, "dislikes": dislikes, "views": views})
                             print(result)
                             sys.stdout.flush()
                             try:
                                 conn.sendall(str.encode(result + '\n'))
                             except Exception:
-                                print("send error")
+                                print("Youtube Scraper: send error")
                                 sys.stdout.flush()
                                 e = sys.exc_info()[0]
                                 print("Error: %s" % e)
                                 sys.stdout.flush()
                                 break
-                            # TODO send result json to spark
         el = []
         number_of_videos_scraped = 0
         pg = 1
         while number_of_videos_scraped < videos_per_game and not kill_event.is_set():
             scrape(pg)
             pg += 1
-        if kill_event.is_set:
+        if kill_event.is_set():
             print("Youtube Scraper: shutting down, saving links and exiting...")
             sys.stdout.flush()
             break
@@ -155,7 +157,7 @@ def scrape_youtube(queue, videos_per_game, kill_event):
         with open('scrapedVideos.txt', 'w') as f:
             f.write(str(scraped_videos))
     except EnvironmentError:
-        print('uh oh, error writing scraped video set to file!')
+        print('Youtube Scraper: uh oh, error writing scraped video set to file!')
 
 
     # with open('minecraft.csv', 'a', encoding="utf-8") as csv_file:

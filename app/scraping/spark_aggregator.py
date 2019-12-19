@@ -2,12 +2,15 @@ from pyspark import SparkConf, SparkContext
 from pyspark.streaming import StreamingContext
 from pyspark.sql import Row, SQLContext
 import sys
+import time
 import requests
 
 # ==== Spark Aggregator App ====
 # Run this app second after running scraping.py
 # This spark app receives data simultaneously from two web scraping scripts youtubeScraper & pcgamerScraper
 # and transforms game-specific data into genre-wide data metrics, which get sent to the front end dashboard
+# apt-get update && apt-get install -y netcat
+# spark-submit spark_aggregator.py --master local[2]
 
 # create spark configuration
 conf = SparkConf()
@@ -20,11 +23,10 @@ ssc = StreamingContext(sc, 2)
 # setting a checkpoint for RDD recovery (necessary for updateStateByKey)
 ssc.checkpoint("checkpoint_TwitterApp")
 # read data from port 9009 and port 9010
-youtubeDataStream = ssc.socketTextStream("twitter", 9009)
-# newsDataStream = ssc.socketTextStream("twitter", 9010)
+combinedDataStream = ssc.socketTextStream("twitter", 9009)
 
-# combined = youtubeDataStream.union(newsDataStream)
-# print(combined)
+
+
 
 # # TODO: Do RDD aggregations here... and Modify the two functions below
 #
@@ -83,7 +85,7 @@ def process_interval(time, rdd):
 
 
 # do this for every single interval
-youtubeDataStream.foreachRDD(process_interval)
+combinedDataStream.foreachRDD(process_interval)
 # newsDataStream.foreachRDD(process_interval)
 
 # start the streaming computation

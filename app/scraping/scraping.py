@@ -4,21 +4,27 @@ import socket
 import pandas as pd
 import datetime as dt
 from youtubeScraper import scrape_youtube
+from newsScraper import scrape_news
 import time
 
 # Get current month and year, format: 012018
 x = dt.datetime.now()
-current = x.strftime("%m") + x.strftime("%Y")
+current_month = x.strftime("%m")
+current_year = x.strftime("%Y")
 
 # Filters/Values Specified by User from the Front End:
-data_from = "012019"        # Scrape youtube and news data from data_from until data_to
-dara_to = current
+month_from = 1              # Scrape youtube and news data from data_from until data_to
+year_from = 2019
+month_to = current_month
+year_to = current_year
 genres = []                 # list of genres to get data for. Empty means all genres.
 youtube_videos_per_game = 200
 
 if __name__ == '__main__':
+    # Log Process Info to stderr to be visible upon execution
     logger = mp.log_to_stderr()
     logger.setLevel(logging.INFO)
+
     # ==== setup local connection(s) to spark aggregator ====
     # IP and port of local machine or Docker
     TCP_IP = socket.gethostbyname(socket.gethostname())  # returns local IP
@@ -32,9 +38,7 @@ if __name__ == '__main__':
     print("Waiting for TCP connection...")
     # if the connection is accepted, proceed
     conn, addr = s.accept()
-    print("Connected... Starting to scrape youtube game data.")
-
-    # second port connection for news scraper goes here
+    print("Connected to Youtube Scraper... Starting to scrape youtube game data.")
 
     # ==== Listen to Front End ====
     # connect and listen to front end, change filters/values to new values
@@ -44,16 +48,17 @@ if __name__ == '__main__':
     killEvent.clear()
     print(str(killEvent.is_set()))
     queue = mp.Queue()      # used to pass connection to spark to processes so they can send data
+    queue2 = mp.Queue()
     p1 = mp.Process(target=scrape_youtube, args=(queue, youtube_videos_per_game, killEvent))
-    # p2 = mp.Process(target=scrape_news, args=(queue1, data_from, data_to, killEvent))
+    p2 = mp.Process(target=scrape_news, args=(queue2, month_from, year_from, month_to, year_to, killEvent))
     p1.start()
     queue.put(conn)  # send connection with spark to youtube scraper
-    # p2.start()
-    # queue1.put(conn)
+    p2.start()
+    queue2.put(conn)
     try:
         p1.join()
-        # p2.join()
+        p2.join()
     except KeyboardInterrupt:
         killEvent.set()
         p1.join()
-        # p2.join()
+        p2.join()
