@@ -127,7 +127,7 @@ def scrape_youtube(queue, videos_per_game, kill_event):
                             dislikes = more_data.dislike
                             views = more_data.views
                             published = more_data.published
-                            date = published.lower().replace(',', '')
+                            date = published.lower().replace(',', '').replace('streamed live on ', '')
                             date_pub = datetime.datetime.strptime(date, "%b %d %Y")
                             result = json.dumps({"month": date_pub.strftime("%m"), "year": date_pub.strftime("%Y"), "genre": row.genre.split(','), "name": row.name, "likes": likes, "dislikes": dislikes, "views": views})
                             print(result)
