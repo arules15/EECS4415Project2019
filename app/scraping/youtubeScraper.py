@@ -164,7 +164,8 @@ def scrape_youtube(queue, videos_per_game, genres, kill_event):
     # record set of previously scraped videos to file for next time
     try:
         with open('scrapedVideos.txt', 'w') as f:
-            f.write(str(scraped_videos))
+            if len(scraped_videos) is not 0:        # if there are scraped links to save, save it!
+                f.write(str(scraped_videos))
     except EnvironmentError:
         print('Youtube Scraper: uh oh, error writing scraped video set to file!')
 
