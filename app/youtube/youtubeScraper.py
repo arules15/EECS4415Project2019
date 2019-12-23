@@ -20,20 +20,14 @@ class YoutubeScrape(object):
         self.poster = self.parse_string('.yt-user-info')
         self.views = self.parse_int('.watch-view-count')
         self.published = self.parse_string('.watch-time-text')
-<<<<<<< HEAD
         self.published = re.sub(
             r'(Published|Uploaded) on', '', self.published).strip()
-        self.like = self.parse_int('.yt-uix-clickcard', 4)
-        self.dislike = self.parse_int('.yt-uix-clickcard', 5)
-=======
-        self.published = re.sub(r'(Published|Uploaded) on', '', self.published).strip()
         for b in soup.findAll('button', attrs={'title': 'I like this'}):
             self.like = int(re.sub('[^0-9]', '', b.text))
             break
         for b in soup.findAll('button', attrs={'title': 'I dislike this'}):
             self.dislike = int(re.sub('[^0-9]', '', b.text))
             break
->>>>>>> ec4d35bbc215ef5f04d8f220b72e8d724609b495
 
     def parse_int(self, selector, pos=0):
         """ Extract one integer element from soup """
@@ -77,14 +71,9 @@ def getLink(search, page):
 
 
 el = []
-<<<<<<< HEAD
 # set the (min to max-1) page numbers of results that you would like to scrape from youtube
-for page in range(1, 10):
-    search = "fortnite"         # set your youtube search query
-=======
-for page in range(1, 30):       # set the (min to max-1) page numbers of results that you would like to scrape from youtube
+for page in range(1, 30):
     search = "minecraft"         # set your youtube search query
->>>>>>> ec4d35bbc215ef5f04d8f220b72e8d724609b495
     link = getLink(search, page)
 
     # Scrape the link

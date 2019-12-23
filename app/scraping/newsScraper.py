@@ -11,6 +11,7 @@ import os
 # pip install textblob
 # make sure you have the news results.csv renamed as pcGamerResults.csv in the docker container
 
+
 def clean_tweet(tweet):
     return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", tweet).split())
 
@@ -37,12 +38,14 @@ def scrape_article(link):
     list_div1 = soup1.findAll("p")
     content1 = ""
     for tag1 in list_div1:
-        content1 = content1 + str(str(tag1.get_text()).replace('\n', ' ').replace('\r', ''))
+        content1 = content1 + \
+            str(str(tag1.get_text()).replace('\n', ' ').replace('\r', ''))
     return content1
 
 
 def scrape_pcgamer(month, year):
-    link = "https://www.pcgamer.com/archive/" + str(year) + "/" + str(month) + "/"
+    link = "https://www.pcgamer.com/archive/" + \
+        str(year) + "/" + str(month) + "/"
     response = requests.get(link)
     soup = BeautifulSoup(response.text, 'html.parser')
     list_div = soup.findAll("li", {"class": "day-article"})
@@ -56,7 +59,9 @@ def scrape_pcgamer(month, year):
             url = tag.a.get('href')
             content = scrape_article(url)
             # print(str(month) + '/' + str(year), title, url, content)
-            csv_writer.writerow([str(month) + '/' + str(year), title.strip(), url, content.strip()])  # write to csv row
+            # write to csv row
+            csv_writer.writerow(
+                [str(month) + '/' + str(year), title.strip(), url, content.strip()])
 
 
 def month_year_iter(start_month, start_year, end_month, end_year):
@@ -67,11 +72,14 @@ def month_year_iter(start_month, start_year, end_month, end_year):
         yield y, m+1
 
 
-def scrape_news(queue, month_from, year_from, month_to, year_to, killEvent):
+def scrape_news(queue, month_from, year_from, month_to, year_to, genres, killEvent):
     conn = queue.get()  # get connection to spark from parent process
     articles_df = pd.read_csv("pcGamerResults.csv")
     dc = articles_df[['Month/Year', 'Content']]
     games_df = pd.read_csv("steam_games.csv")
+    # selection criteria (genre, game, or some other parameter to be passed onto the scrapers, selection_criteria = [column_name, value])
+    games_df = games_df[[genre in genres for genre in games_df["genre"]]]
+
     for row in games_df.itertuples():
         if killEvent.is_set():
             print("PcGamer Scraper: Shutting Down...3")
@@ -82,15 +90,19 @@ def scrape_news(queue, month_from, year_from, month_to, year_to, killEvent):
                 break
             if not articles_df["Month/Year"].str.contains(str(m)+'/'+str(y)).any():
                 scrape_pcgamer(m, y)
-            articles_from_month = dc.loc[dc['Month/Year'] == str(m) + '/' + str(y)]
-            articles_from_month['wc'] = articles_from_month['Content'].str.count(r"" + re.escape(row.name), re.IGNORECASE)
-            articles_from_month['sentiment'] = articles_from_month.apply(lambda row1: sentiment(row1), axis=1)
+            articles_from_month = dc.loc[dc['Month/Year']
+                                         == str(m) + '/' + str(y)]
+            articles_from_month['wc'] = articles_from_month['Content'].str.count(
+                r"" + re.escape(row.name), re.IGNORECASE)
+            articles_from_month['sentiment'] = articles_from_month.apply(
+                lambda row1: sentiment(row1), axis=1)
             afm = articles_from_month[['Month/Year', 'wc', 'sentiment']]
             for r in afm.itertuples():
                 if killEvent.is_set():
                     print("PcGamer Scraper: Shutting Down...1")
                     break
-                results = json.dumps({"month": m, "year": y, "genre": row.genre.split(','), "game": row.name, "wc": r.wc, "sentiment": r.sentiment})
+                results = json.dumps({"month": m, "year": y, "genre": row.genre.split(
+                    ','), "game": row.name, "wc": r.wc, "sentiment": r.sentiment})
                 print(results)
                 sys.stdout.flush()
                 try:
@@ -98,4 +110,3 @@ def scrape_news(queue, month_from, year_from, month_to, year_to, killEvent):
                 except:
                     print("news send error")
                     sys.stdout.flush()
-

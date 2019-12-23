@@ -7,6 +7,8 @@ from youtubeScraper import scrape_youtube
 from newsScraper import scrape_news
 import time
 
+
+# def scraping(month_from, month_to, year_from, year_to, genres, youtube_videos_per_game):
 # Get current month and year, format: 012018
 x = dt.datetime.now()
 current_month = x.strftime("%m")
@@ -17,7 +19,8 @@ month_from = 1              # Scrape youtube and news data from data_from until 
 year_from = 2019
 month_to = current_month
 year_to = current_year
-genres = []                 # list of genres to get data for. Empty means all genres.
+# list of genres to get data for. Empty means all genres.
+genres = ["Action"]
 youtube_videos_per_game = 200
 
 if __name__ == '__main__':
@@ -44,13 +47,17 @@ if __name__ == '__main__':
     # connect and listen to front end, change filters/values to new values
 
     # ==== Invoke Scrapers ====
-    killEvent = mp.Event()  # event that causes both scrapers to save progress, shut down and terminate
+    # event that causes both scrapers to save progress, shut down and terminate
+    killEvent = mp.Event()
     killEvent.clear()
     print(str(killEvent.is_set()))
-    queue = mp.Queue()      # used to pass connection to spark to processes so they can send data
+    # used to pass connection to spark to processes so they can send data
+    queue = mp.Queue()
     queue2 = mp.Queue()
-    p1 = mp.Process(target=scrape_youtube, args=(queue, youtube_videos_per_game, killEvent))
-    p2 = mp.Process(target=scrape_news, args=(queue2, month_from, year_from, month_to, year_to, killEvent))
+    p1 = mp.Process(target=scrape_youtube, args=(
+        queue, youtube_videos_per_game, genres, killEvent))
+    p2 = mp.Process(target=scrape_news, args=(
+        queue2, month_from, year_from, month_to, year_to, genres, killEvent))
     p1.start()
     queue.put(conn)  # send connection with spark to youtube scraper
     p2.start()

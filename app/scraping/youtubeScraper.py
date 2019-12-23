@@ -16,6 +16,7 @@ import datetime
 # Given the name of the game, genre(s) of the game and the number of videos to scrape,
 # will extract video results and send them to spark_aggregator via port 9009
 
+
 class YoutubeScrape(object):
     """ Scraper object to hold data """
 
@@ -26,7 +27,8 @@ class YoutubeScrape(object):
         self.poster = self.parse_string('.yt-user-info')
         self.views = self.parse_int('.watch-view-count')
         self.published = self.parse_string('.watch-time-text')
-        self.published = re.sub(r'(Published|Uploaded) on', '', self.published).strip()
+        self.published = re.sub(
+            r'(Published|Uploaded) on', '', self.published).strip()
         for b in soup.findAll('button', attrs={'title': 'I like this'}):
             self.like = int(re.sub('[^0-9]', '', b.text))
             break
@@ -74,7 +76,7 @@ def getLink(search, page):
     return "https://www.youtube.com/results?search_query=" + result + "&page=" + str(page)
 
 
-def scrape_youtube(queue, videos_per_game, kill_event):
+def scrape_youtube(queue, videos_per_game, genres, kill_event):
     conn = queue.get()  # get connection to spark from parent process
     # get set of previously scraped videos if any
     try:
@@ -85,6 +87,9 @@ def scrape_youtube(queue, videos_per_game, kill_event):
 
     # for each game in the dataset, scrape videos about those games
     games_df = pd.read_csv("steam_games.csv")
+    # selection criteria (genre, game, or some other parameter to be passed onto the scrapers, selection_criteria = [column_name, value])
+    games_df = games_df[[genre in genres for genre in games_df["genre"]]]
+
     for row in games_df.itertuples():
         def scrape(page):
             print('Youtube Scraper: Working on page:'+str(page))
@@ -105,7 +110,8 @@ def scrape_youtube(queue, videos_per_game, kill_event):
             # Convert scrape results to JSON
             for x in el:
                 if kill_event.is_set():
-                    print("Youtube Scraper: Shutdown Triggered, breaking out of scraping loop...")
+                    print(
+                        "Youtube Scraper: Shutdown Triggered, breaking out of scraping loop...")
                     sys.stdout.flush()
                     break
                 if number_of_videos_scraped < videos_per_game:
@@ -121,15 +127,18 @@ def scrape_youtube(queue, videos_per_game, kill_event):
                             scraped_videos.add(partial_link)
                             number_of_videos_scraped += 1
                             if number_of_videos_scraped % 10 == 0:
-                                print(str(number_of_videos_scraped)+" youtube videos scraped")
+                                print(str(number_of_videos_scraped) +
+                                      " youtube videos scraped")
                                 sys.stdout.flush()
                             likes = more_data.like
                             dislikes = more_data.dislike
                             views = more_data.views
                             published = more_data.published
                             date = published.lower().replace(',', '').replace('streamed live on ', '')
-                            date_pub = datetime.datetime.strptime(date, "%b %d %Y")
-                            result = json.dumps({"month": date_pub.strftime("%m"), "year": date_pub.strftime("%Y"), "genre": row.genre.split(','), "name": row.name, "likes": likes, "dislikes": dislikes, "views": views})
+                            date_pub = datetime.datetime.strptime(
+                                date, "%b %d %Y")
+                            result = json.dumps({"month": date_pub.strftime("%m"), "year": date_pub.strftime(
+                                "%Y"), "genre": row.genre.split(','), "name": row.name, "likes": likes, "dislikes": dislikes, "views": views})
                             print(result)
                             sys.stdout.flush()
                             try:
@@ -158,7 +167,6 @@ def scrape_youtube(queue, videos_per_game, kill_event):
             f.write(str(scraped_videos))
     except EnvironmentError:
         print('Youtube Scraper: uh oh, error writing scraped video set to file!')
-
 
     # with open('minecraft.csv', 'a', encoding="utf-8") as csv_file:
     #     csv_writer = writer(csv_file)
