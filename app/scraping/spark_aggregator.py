@@ -7,6 +7,10 @@ import requests
 import re
 import json
 
+# Couldn't Implement the genre output yet, for some reason it would crash the spark job, and as it stands
+# the genre is being used to filter the results anyways so the main genre can be pulled from the input from frontend
+# Will continue to work on getting the genre info in there though
+
 # ==== Spark Aggregator App ====
 # Run this app second after running scraping.py
 # This spark app receives data simultaneously from two web scraping scripts youtubeScraper & pcgamerScraper
@@ -25,9 +29,9 @@ ssc = StreamingContext(sc, 2)
 # setting a checkpoint for RDD recovery (necessary for updateStateByKey)
 ssc.checkpoint("checkpoint_TwitterApp")
 # read data from port 9009 and port 9010
-combinedDataStream = ssc.socketTextStream("twitter", 9009)
+# combinedDataStream = ssc.socketTextStream("twitter", 9009)
 # For use in Abduls local spark instance, comment out if using in docker
-#combinedDataStream = ssc.socketTextStream("10.0.75.1", 9009)
+combinedDataStream = ssc.socketTextStream("10.0.75.1", 9009)
 
 # # TODO: Do RDD aggregations here... and Modify the two functions below
 
@@ -53,10 +57,8 @@ def comb_op(accumulator1, accumulator2):
 
 # filter for streams that are actually articles by checking if the string has wc in it
 usefuldata = articles.filter(lambda article: "wc" in article).map(
-    # lambda article: (article.split(",")[0][10:11], (int(article.split(",")[4][7:8]), float(article.split(",")[5][14:23]))))  # article.split(",")[10:11]
     lambda article: (json.loads(article)["month"], (int(
         json.loads(article)["wc"]), float(json.loads(article)["sentiment"]))))
-# lambda article: (article["month"], article["sentiment"], article["wc"]))
 # usefuldata now contains a list of all the month, sentiment and wordcount pairs
 total_sentiment_rdd = usefuldata.transform(
     # a is the previous value, b is the current
@@ -109,6 +111,14 @@ sentiment_totals = total_sentiment_rdd.updateStateByKey(aggregate_months_count)
 # # process a single time interval
 
 
+def send_results_to_flask(result):
+    url = "http://127.0.0.1:5000/UpdateSentiment"
+    request_data = {'label': '{}'.format(
+        result[0]), 'data': str(result[1])}  # , result[1][1])}
+    response = requests.post(url, data=request_data)
+    return response.status_code
+
+
 def process_interval(time, rdd):
     # print a separator
     print("----------- %s -----------" % str(time))
@@ -132,8 +142,13 @@ def process_interval(time, rdd):
         # # print(str(overall_averages))
         # top10 = list(map(lambda k: (k[0], k[1] / k[2] if k[2] > 0 else 0), overall_averages))
         # # print it nicely
-        for el in rdd.collect():
-            print(el)
+        sentiments = rdd.collect()
+        for el in sentiments:
+            # print(el)
+            # elList = el.split(",")
+            # print(str(len(el)))
+            print('{} {} {}'.format(el[0], el[1][0], el[1][1]))
+            send_results_to_flask(el)
             # formula for total sentiment weighting
             # its all about the weights, for each game
             # game sentiment += (gamewc in article) / (total word count for all articles in month) * article sentiment
@@ -172,7 +187,7 @@ def process_interval(time, rdd):
         # send_results_to_dashboard(results)
     except:
         e = sys.exc_info()[0]
-        print("Error: %s" % e)
+        print("Error: Fuckkkkkkkkk %s" % e)
 
 
 # do this for every single interval

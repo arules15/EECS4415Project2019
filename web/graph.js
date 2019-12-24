@@ -1,71 +1,93 @@
+//const axios = require('axios');
+//import axios from "https://unpkg.com/axios/dist/axios.min.js";
 
-import "https://code.highcharts.com/highcharts.js";
-import "https://code.highcharts.com/modules/series-label.js";
-import "https://code.highcharts.com/modules/exporting.js";
-import "https://code.highcharts.com/modules/export-data.js";
-import "https://unpkg.com/axios/dist/axios.min.js";
+function myData() {
+    var series1 = [];
 
-Highcharts.chart(document.getElementById('container'), {
-
-    title: {
-        text: 'Solar Employment Growth by Sector, 2010-2016'
-    },
-
-    subtitle: {
-        text: 'Source: thesolarfoundation.com'
-    },
-
-    yAxis: {
-        title: {
-            text: 'Number of Employees'
-        }
-    },
-    legend: {
-        layout: 'vertical',
-        align: 'right',
-        verticalAlign: 'middle'
-    },
-
-    plotOptions: {
-        series: {
-            label: {
-                connectorAllowed: false
-            },
-            pointStart: 2010
-        }
-    },
-
-    series: [{
-        name: 'Installation',
-        data: [43934, 52503, 57177, 69658, 97031, 119931, 137133, 154175]
-    }, {
-        name: 'Manufacturing',
-        data: [24916, 24064, 29742, 29851, 32490, 30282, 38121, 40434]
-    }, {
-        name: 'Sales & Distribution',
-        data: [11744, 17722, 16005, 19771, 20185, 24377, 32147, 39387]
-    }, {
-        name: 'Project Development',
-        data: [null, null, 7988, 12169, 15112, 22452, 34400, 34227]
-    }, {
-        name: 'Other',
-        data: [12908, 5948, 8105, 11248, 8989, 11816, 18274, 18111]
-    }],
-
-    responsive: {
-        rules: [{
-            condition: {
-                maxWidth: 500
-            },
-            chartOptions: {
-                legend: {
-                    layout: 'horizontal',
-                    align: 'center',
-                    verticalAlign: 'bottom'
-                }
-            }
-        }]
+    for (var i = 1; i < 100; i++) {
+        series1.push({
+            x: i, y: 100 / i
+        });
     }
 
-});
+    return [
+        {
+            key: "Series #1",
+            values: series1,
+            color: "#0000ff"
+        }
+    ];
+}
 
+var series2 = []
+
+//this function is used to pull the sentiment data from the flask server and update the series array
+//each analysis will have its own unique function like this
+function sentimentData() {
+    //series2 = [{ x: 1, y: 460 }, { x: 2, y: 386 }, { x: 3, y: 420 }, { x: 4, y: 410 }, { x: 5, y: 490 }, { x: 6, y: 520 }, { x: 7, y: 479 }];
+    axios.get('http://127.0.0.1:5000/GetSentiment', { crossdomain: true })
+        .then((response) => {
+            console.log(response.data);
+            sentiment = response.data;
+        })
+        .catch((err) => { console.log(err) });
+
+
+    return [{
+        key: "Sentiment",
+        values: sentiment,
+        color: "#0000ff"
+    }]
+}
+
+//Used to reconstruct graph every 5 seconds, it'll call the above function (SentimentData) to poll the flask server for new data
+//and update the chart accordingly
+var interval = setInterval(() => {
+    nv.addGraph(function () {
+        var chart = nv.models.lineChart();
+
+        chart.xAxis
+            .axisLabel("X-axis Label");
+
+        chart.yAxis
+            .axisLabel("Y-axis Label")
+            .tickFormat(d3.format("d"))
+            ;
+
+        d3.select("#series1")
+            .datum(myData())
+            .transition().duration(500).call(chart);
+
+        nv.utils.windowResize(
+            function () {
+                chart.update();
+            }
+        );
+
+        return chart;
+    });
+
+    nv.addGraph(function () {
+        var chart = nv.models.lineChart();
+
+        chart.xAxis
+            .axisLabel("X-axis Label");
+
+        chart.yAxis
+            .axisLabel("Y-axis Label")
+            .tickFormat(d3.format("d"))
+            ;
+
+        d3.select("#sentimentPlot")
+            .datum(sentimentData())
+            .transition().duration(500).call(chart);
+
+        nv.utils.windowResize(
+            function () {
+                chart.update();
+            }
+        );
+
+        return chart;
+    });
+}, 5000);

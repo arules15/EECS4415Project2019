@@ -3,14 +3,33 @@ from time import time, ctime
 #from youtube.youtubeScraper import YoutubeScrape
 #from app.youtube.youtubeScraper import YoutubeScrape
 import datetime as dt
-from app import steamproject
+#from app import steamproject
 import sys
 import csv
 import flask
 from flask import make_response
 from flask import request
 from flask import jsonify
-from app.scraping import scraping
+from flask_cors import CORS, cross_origin
+#from app.scraping import scraping
+import ast
+
+cors = CORS(application)
+application.config['CORS_HEADERS'] = 'Content-Type'
+global Sentiments
+Sentiments = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0,
+              6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}
+# we want a list of dictionaries instead, of the form
+#[{x:1 , y:0}, {x:2, y:0}]
+
+# convert the data coming in from spark to a list in the format required for the chart
+
+
+def convertToList(dictionary):
+    returnList = {"sents": []}
+    for i in dictionary.keys():
+        returnList["sents"].append({"x": i, "y": dictionary[i]})
+    return returnList
 
 
 @application.route('/')
@@ -18,29 +37,37 @@ from app.scraping import scraping
 def index():
     return "Hello, World!"
 
-# I think it would be better to forward these to a whole new file based on the request
-# for example, say a user wants to run an analysis on the like/dislike ratio of yotube videos in relation to the top 50 games
-# in the fps genre
-# we will
-# @application.route('/GenreRequest/<string:Genre>', methods=['GET'])
-# def ReadSteamCsv(Genre):
+# Called by the frontend to get new sentiment values
+@application.route('/GetSentiment', methods=['GET'])
+@cross_origin()
+def handleGetSentiment():
+    toSend = convertToList(Sentiments)
+    message = {
+        'status': 200,
+        'message': 'Ok',
+        'sentiments': toSend
+    }
 
-#     # use the steamproject file to obtain top 10 games in a list, pass this list onto the youyube scraping function
-#     # to obtain the like/dislike ratio and other data about the genre, send this back in json to the
-#     # UI application for processing
-#     toReturn = steamproject.main()
-#     toReturn2 = steamproject.wordOccurences(8, toReturn, 10)
-#     message = {
-#         'status': 200,
-#         'message': 'Ok',
-#         'Genre': Genre,
-#         "Pls-Work": toReturn2  # 'like-dislike_ratio': """like dislike ratio dictionary"""
-#     }
+    return jsonify(message["sentiments"]["sents"])
 
-#     return jsonify(message)
+# updated by spark with new values as they arrive, it modifies a global disctionary
+# called Sentiments which is of the form {"month": sentiment}
+@application.route('/UpdateSentiment', methods=['POST'])
+def handleUpdateSentiment():
+    global month, values
+    if not request.form or 'data' not in request.form:
+        return "error", 400
+    month = ast.literal_eval(request.form['label'])
+    values = ast.literal_eval(request.form['data'])
+    #Sentiments[i] = sentiment/wordcount
+    Sentiments[month] = float(values[1]) / int(values[0])
+    print("labels received: " + str(month))
+    print("data received: " + str(values))
+    return "success", 201
 
-
-@application.route('/DataRequest', methods=['GET'])
+# This function will be used to update the requirements from the front end, will work on this once we can figure ot how to get
+# the scraper to run from this flask server
+@application.route('/DataRequest', methods=['POST'])
 def driverFunction():
     # month_from = request.args.get("month_from")
     # month_to = request.args.get("month_to")
@@ -61,6 +88,6 @@ def driverFunction():
     # list of genres to get data for. Empty means all genres.
     genres = []
     youtube_videos_per_game = 200
-    scraping.scraping(month_from, month_to, year_from,
-                      year_to, genres, youtube_videos_per_game)
+    # scraping.scraping(month_from, month_to, year_from,
+    # year_to, genres, youtube_videos_per_game)
 #month_from, month_to, year_from, year_to, genres, youtube_videos_per_game

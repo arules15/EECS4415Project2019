@@ -2,3 +2,4 @@
 /app/scraping/pcGamerResults.csv
 /app/scraping/steam_games.csv
 /app/scraping/checkpoint_TwitterApp
+/web/nvd3

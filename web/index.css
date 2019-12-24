@@ -4,3 +4,9 @@
 	height: 400px;
 	margin: 0 auto
 }
+
+#sentimentPlot{
+	margin-right: 100px;
+	height: 400px;
+	width: 400px
+}

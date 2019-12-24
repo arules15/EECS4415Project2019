@@ -12,6 +12,7 @@ pandas = "*"
 flask = "*"
 bs4 = "*"
 textblob = "*"
+flask-cors = "*"
 
 [requires]
 python_version = "3.6"
