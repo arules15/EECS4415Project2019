@@ -135,6 +135,14 @@ def send_results_to_flask(result):
     return response.status_code
 
 
+def send_views_to_flask(videos):
+    url = "http://127.0.0.1:5000/UpdateViews"
+    request_data = {'label': '{}'.format(
+        videos[0]), 'data': str(videos[1])}  # , result[1][1])}
+    response = requests.post(url, data=request_data)
+    return response.status_code
+
+
 def process_interval(time, rdd):
     # print a separator
     print("----------- %s -----------" % str(time))
@@ -143,11 +151,12 @@ def process_interval(time, rdd):
         for el in sentiments:
             # el[0] =  a single number mm representing the month for news datastream
             # and a number like yyyymm representing the year and month for youtube stream
-            if len(el[0]) < 3:
+            if type(el[0]) is int:
                 print('{} {} {}'.format(el[0], el[1][0], el[1][1]))
                 send_results_to_flask(el)
             else:
                 print('{} {}'.format(el[0], el[1]))
+                # send_views_to_flask(el)
             # formula for total sentiment weighting
             # its all about the weights, for each game
             # game sentiment += (gamewc in article) / (total word count for all articles in month) * article sentiment
@@ -160,7 +169,7 @@ def process_interval(time, rdd):
             # divide each value by wc to obtain the weighted sentiment value to be sent to the frontend
     except:
         e = sys.exc_info()[0]
-        print("Error: :( ) %s" % e)
+        print("Error: :((((( ) %s" % e)
 
 
 def process_views_interval(time, rdd):
@@ -170,7 +179,7 @@ def process_views_interval(time, rdd):
             print('{} {}'.format(video[0], video[1]))
     except:
         e = sys.exc_info()[0]
-        print("Error: :( ) %s" % e)
+        print("Error: :((((( ) %s" % e)
 
 
 # do this for every single interval

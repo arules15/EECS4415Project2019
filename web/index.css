@@ -6,7 +6,16 @@
 }
 
 #sentimentPlot{
+	position: absolute;
 	margin-right: 100px;
 	height: 400px;
-	width: 400px
+	width: 400px;
+	right: 550px;
+	top: 100px
+}
+
+#sentimentid{
+	position: absolute;
+	right: 550px;
+	top: 0px
 }
