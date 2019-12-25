@@ -20,6 +20,7 @@ function myData() {
 }
 
 var series2 = []
+var sentiment = []
 
 //this function is used to pull the sentiment data from the flask server and update the series array
 //each analysis will have its own unique function like this

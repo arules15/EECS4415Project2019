@@ -60,6 +60,7 @@ usefuldata = articles.filter(lambda article: "wc" in article).map(
     lambda article: (json.loads(article)["month"], (int(
         json.loads(article)["wc"]), float(json.loads(article)["sentiment"]))))
 # usefuldata now contains a list of all the month, sentiment and wordcount pairs
+
 total_sentiment_rdd = usefuldata.transform(
     # a is the previous value, b is the current
     lambda x: x.aggregateByKey(
@@ -67,6 +68,10 @@ total_sentiment_rdd = usefuldata.transform(
         seq_op,
         comb_op
     ))
+
+ytViewsData_rdd = articles.filter(lambda article: "likes" in article).map(
+    lambda article: (str(json.loads(article)["year"]) + str(json.loads(article)["month"]), int(
+        json.loads(article)["views"])))
 
 # add the previous sentiment and wordocunt values with the new values
 
@@ -83,7 +88,18 @@ def aggregate_months_count(new_values, total_sum):
     return values
 
 
+def aggregate_views_count(new_values, total_sum):
+    if total_sum is None:
+        total_sum = 0
+    values = total_sum
+    if new_values:
+        values = sum(new_values, total_sum)
+    return values
+
+
 sentiment_totals = total_sentiment_rdd.updateStateByKey(aggregate_months_count)
+
+views_total = ytViewsData_rdd.updateStateByKey(aggregate_views_count)
 
 #
 # # GOAL: In the results list we send to the dashboard, we want results containing the following aggregated data:
@@ -122,26 +138,7 @@ def send_results_to_flask(result):
 def process_interval(time, rdd):
     # print a separator
     print("----------- %s -----------" % str(time))
-
-    gameSentiment = []
-    MonthDict = {}
-    totalMonthWordCount = 0
-    runningsentiment = 0
     try:
-        # global overall_averages
-        # # sum_count format: ('topic', (numerator, denominator))
-        # # reduce keys by summing up all sentiment results for each key, counting # of keys, and adding on new values to overall averages
-        # sum_count = rdd.combineByKey((lambda x: (x, 1)), (lambda x, y: (x[0] + y, x[1] + 1)), (lambda x, y: (x[0] + y[0], x[1] + y[1])))
-        # for el in sum_count.collect():
-        #     for i, e in enumerate(overall_averages):
-        #         if e[0] == el[0]:       # if 'topic' == t1
-        #             tmp = list(overall_averages[i])
-        #             tmp[1] = tmp[1] + el[1][0]
-        #             tmp[2] = tmp[2] + el[1][1]
-        #             overall_averages[i] = tuple(tmp)
-        # # print(str(overall_averages))
-        # top10 = list(map(lambda k: (k[0], k[1] / k[2] if k[2] > 0 else 0), overall_averages))
-        # # print it nicely
         sentiments = rdd.collect()
         for el in sentiments:
             # print(el)
@@ -159,32 +156,16 @@ def process_interval(time, rdd):
             # 4. at the end of the job, we'll have a list like
             # [Jan: [sentiment, wc], Feb: [sentiment, wc], Mar: [Sentiment, wc]....]
             # divide each value by wc to obtain the weighted sentiment value to be sent to the frontend
+    except:
+        e = sys.exc_info()[0]
+        print("Error: Fuckkkkkkkkk %s" % e)
 
-            # how this will be done in spark
-            # remember these are done in 2 second intervals
-            # for each stream seen in the last 2 second, divide it up into pcgamer stream, or youtube stream
-            # for pcgamer stream,
-            # if el.contains("Sentiment"):
-            #     if el["month"] != previousMonth:
-            #         #do the aggregation
-            #         for i in gameSentiment:
-            #             runningsentiment += ((i[1]/totalMonthWordCount) * i[0])
-            #         MonthDict[previousMonth] = [MonthDict.get(previousMonth, [0, 0])[0] + runningsentiment, MonthDict.get(previousMonth, [0, 0])[1] + totalMonthWordCount]
-            #         print(previousmonth + " " + str(totalMonthWordCount) + " " + runningsentiment)
-            #         previousMonth = el["month"]
-            #         runningsentiment = 0
-            #         totalMonthWordCount = 0
-            #         gameSentiment = []
 
-            #     elif el["wc" > 0]
-            #         gameSentiment.append([el["sentiment"], el["wc"]])
-            #         totalMonthWordCount += el["wc"]
-
-        # results = list()
-        # for tag in results:
-        #     print('{:<40} {}'.format(tag[0], tag[1]))
-        # call this method to prepare top 10 hashtags DF and send them
-        # send_results_to_dashboard(results)
+def process_views_interval(time, rdd):
+    try:
+        videos = rdd.collect()
+        for video in videos:
+            print('{} {}'.format(video[0], video[1]))
     except:
         e = sys.exc_info()[0]
         print("Error: Fuckkkkkkkkk %s" % e)
@@ -194,7 +175,7 @@ def process_interval(time, rdd):
 # articles.foreachRDD(process_interval)
 sentiment_totals.foreachRDD(process_interval)
 # newsDataStream.foreachRDD(process_interval)
-
+views_total.foreachRDD(process_views_interval)
 # start the streaming computation
 ssc.start()
 # wait for the streaming to finish

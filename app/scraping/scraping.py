@@ -22,7 +22,7 @@ year_from = 2019
 month_to = current_month
 year_to = current_year
 # list of genres to get data for. Empty means all genres.
-genres = ["Action"]
+genres = ["Sports"]
 youtube_videos_per_game = 200
 
 if __name__ == '__main__':
