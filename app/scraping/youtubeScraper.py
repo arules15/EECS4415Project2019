@@ -76,6 +76,19 @@ def getLink(search, page):
     return "https://www.youtube.com/results?search_query=" + result + "&page=" + str(page)
 
 
+# takes a json object of the form: {"month": 1, "year": 2018, "genre": [Action, Adventure], "name": Minecraft, "likes": 100, "dislikes": 200, "views": 12000}
+# and returns an object of json objects for each genre:
+# {{"month": 1, "year": 2018, "genre": Action, "name": Minecraft, "likes": 100, "dislikes": 200, "views": 12000},
+# {"month": 1, "year": 2018, "genre": Adventure, "name": Minecraft, "likes": 100, "dislikes": 200, "views": 12000}}
+def explode_json_by_genre(json_obj):
+    res = []
+    for g in json_obj.get('genre'):
+        cpy = json_obj
+        cpy['genre'] = str(g)
+        res.append(cpy)
+    return res
+
+
 def scrape_youtube(queue, videos_per_game, genres, kill_event):
     conn = queue.get()  # get connection to spark from parent process
     # get set of previously scraped videos if any
@@ -134,22 +147,25 @@ def scrape_youtube(queue, videos_per_game, genres, kill_event):
                             dislikes = more_data.dislike
                             views = more_data.views
                             published = more_data.published
-                            date = published.lower().replace(',', '').replace('streamed live on ', '')
+                            date = published.lower().replace(',', '').replace('streamed live on ', '').replace('premiered ', '')
                             date_pub = datetime.datetime.strptime(
                                 date, "%b %d %Y")
-                            result = json.dumps({"month": date_pub.strftime("%m"), "year": date_pub.strftime(
-                                "%Y"), "genre": row.genre.split(','), "name": row.name, "likes": likes, "dislikes": dislikes, "views": views})
-                            print(result)
-                            sys.stdout.flush()
-                            try:
-                                conn.sendall(str.encode(result + '\n'))
-                            except Exception:
-                                print("Youtube Scraper: send error")
+                            json_object = {"month": date_pub.strftime("%m"), "year": date_pub.strftime(
+                                "%Y"), "genre": row.genre.split(','), "name": row.name, "likes": likes, "dislikes": dislikes, "views": views}
+                            objects = explode_json_by_genre(json_object)
+                            for obj in objects:
+                                result = json.dumps(obj)
+                                print(result)
                                 sys.stdout.flush()
-                                e = sys.exc_info()[0]
-                                print("Error: %s" % e)
-                                sys.stdout.flush()
-                                break
+                                try:
+                                    conn.sendall(str.encode(result + '\n'))
+                                except Exception:
+                                    print("Youtube Scraper: send error")
+                                    sys.stdout.flush()
+                                    e = sys.exc_info()[0]
+                                    print("Error: %s" % e)
+                                    sys.stdout.flush()
+                                    break
         el = []
         number_of_videos_scraped = 0
         pg = 1
@@ -164,7 +180,7 @@ def scrape_youtube(queue, videos_per_game, genres, kill_event):
     # record set of previously scraped videos to file for next time
     try:
         with open('scrapedVideos.txt', 'w') as f:
-            if len(scraped_videos) is not 0:        # if there are scraped links to save, save it!
+            if len(scraped_videos) != 0:        # if there are scraped links to save, save it!
                 f.write(str(scraped_videos))
     except EnvironmentError:
         print('Youtube Scraper: uh oh, error writing scraped video set to file!')

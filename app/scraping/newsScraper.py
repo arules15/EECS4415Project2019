@@ -64,6 +64,19 @@ def scrape_pcgamer(month, year):
                 [str(month) + '/' + str(year), title.strip(), url, content.strip()])
 
 
+# takes a json object of the form: {... "genre": [Action, Adventure], ....}
+# and returns an object of json objects for each genre:
+# [{..."genre": Action, ...},
+# {..."genre": Adventure, ...}]
+def explode_json_by_genre(json_obj):
+    res = []
+    for g in json_obj.get('genre'):
+        cpy = json_obj
+        cpy['genre'] = str(g)
+        res.append(cpy)
+    return res
+
+
 def month_year_iter(start_month, start_year, end_month, end_year):
     ym_start = 12*start_year + start_month - 1
     ym_end = 12*end_year + end_month - 1
@@ -101,12 +114,15 @@ def scrape_news(queue, month_from, year_from, month_to, year_to, genres, killEve
                 if killEvent.is_set():
                     print("PcGamer Scraper: Shutting Down...1")
                     break
-                results = json.dumps({"month": m, "year": y, "genre": row.genre.split(
-                    ','), "game": row.name, "wc": r.wc, "sentiment": r.sentiment})
-                print(results)
-                sys.stdout.flush()
-                try:
-                    conn.sendall(str.encode(results + '\n'))
-                except:
-                    print("news send error")
+                json_object = {"month": m, "year": y, "genre": row.genre.split(
+                    ','), "game": row.name, "wc": r.wc, "sentiment": r.sentiment}
+                objects = explode_json_by_genre(json_object)
+                for obj in objects:
+                    results = json.dumps(obj)
+                    print(results)
                     sys.stdout.flush()
+                    try:
+                        conn.sendall(str.encode(results + '\n'))
+                    except:
+                        print("news send error")
+                        sys.stdout.flush()
