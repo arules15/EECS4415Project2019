@@ -141,11 +141,13 @@ def process_interval(time, rdd):
     try:
         sentiments = rdd.collect()
         for el in sentiments:
-            # print(el)
-            # elList = el.split(",")
-            # print(str(len(el)))
-            print('{} {} {}'.format(el[0], el[1][0], el[1][1]))
-            send_results_to_flask(el)
+            # el[0] =  a single number mm representing the month for news datastream
+            # and a number like yyyymm representing the year and month for youtube stream
+            if len(el[0]) < 3:
+                print('{} {} {}'.format(el[0], el[1][0], el[1][1]))
+                send_results_to_flask(el)
+            else:
+                print('{} {}'.format(el[0], el[1]))
             # formula for total sentiment weighting
             # its all about the weights, for each game
             # game sentiment += (gamewc in article) / (total word count for all articles in month) * article sentiment
@@ -158,7 +160,7 @@ def process_interval(time, rdd):
             # divide each value by wc to obtain the weighted sentiment value to be sent to the frontend
     except:
         e = sys.exc_info()[0]
-        print("Error: Fuckkkkkkkkk %s" % e)
+        print("Error: :( ) %s" % e)
 
 
 def process_views_interval(time, rdd):
@@ -168,14 +170,15 @@ def process_views_interval(time, rdd):
             print('{} {}'.format(video[0], video[1]))
     except:
         e = sys.exc_info()[0]
-        print("Error: Fuckkkkkkkkk %s" % e)
+        print("Error: :( ) %s" % e)
 
 
 # do this for every single interval
 # articles.foreachRDD(process_interval)
-sentiment_totals.foreachRDD(process_interval)
-# newsDataStream.foreachRDD(process_interval)
-views_total.foreachRDD(process_views_interval)
+complete_rdd = sentiment_totals.union(views_total)
+# sentiment_totals.foreachRDD(process_interval)
+complete_rdd.foreachRDD(process_interval)
+# views_total.foreachRDD(process_views_interval)
 # start the streaming computation
 ssc.start()
 # wait for the streaming to finish
