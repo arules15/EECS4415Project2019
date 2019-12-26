@@ -24,6 +24,7 @@ application.config['CORS_HEADERS'] = 'Content-Type'
 global Sentiments
 # Sentiments = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0,
 # 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}
+WordCount = {}
 Sentiments = {}
 Views = {}
 # we want a list of dictionaries instead, of the form
@@ -77,6 +78,20 @@ def handleGetViews():
 
     return jsonify(message["dates"])
 
+
+# Called by frontend to get new total wordcount, date fromat currently is yyyymm, will get converted to a proper date on the front end
+@application.route('/GetWordCount', methods=['GET'])
+@cross_origin()
+def handleGetWordCount():
+    toSend = WordCount
+    message = {
+        'status': 200,
+        'message': 'Ok',
+        'wordcount': toSend
+    }
+
+    return jsonify(message["wordcount"])
+
 # # updated by spark with new values as they arrive, it modifies a global disctionary
 # # called Sentiments which is of the form {"month": sentiment}
 # @application.route('/UpdateSentiment', methods=['POST'])
@@ -107,12 +122,15 @@ def handleUpdateSentiment():
     date = genremonth.split(',')[1]
     if genre not in Sentiments.keys():
         Sentiments[genre] = {date: float(values[1]) / int(values[0])}
+        WordCount[genre] = {date: int(values[0])}
     else:
         Sentiments[genre][date] = float(values[1]) / int(values[0])
+        WordCount[genre][date] = int(values[0])
 
     print("labels received: " + str(genre))
     print("data received: " + str(float(values[1]) / int(values[0])))
     return "success", 201
+
 
 # updated by spark with new values as they arrive, it modifies a global disctionary
 # called Sentiments which is of the form {"month": sentiment}
