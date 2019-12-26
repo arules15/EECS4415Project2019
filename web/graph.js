@@ -22,6 +22,7 @@ function myData() {
 var series2 = []
 var sentiment = []
 var views = []
+var wordcount = []
 
 //this function is used to pull the sentiment data from the flask server and update the series array
 //each analysis will have its own unique function like this
@@ -159,6 +160,32 @@ function viewsData() {
     return series3;
 }
 
+function wordCountData() {
+    axios.get('http://127.0.0.1:5000/GetWordCount', { crossdomain: true })
+        .then((response) => {
+            console.log(response.data);
+            wordcount = response.data;
+        })
+        .catch((err) => { console.log(err) });
+
+    var series3 = [];
+    var objectholder = {};
+
+    for (const gen of Object.keys(wordcount)) {
+        var arrToPush = {};
+        arrToPush.key = gen;
+        arrToPush.values = []
+        for (const [date, value] of Object.entries(wordcount[gen])) {
+            arrToPush.values.push({ x: new Date(parseInt(date.substring(0, 4)), parseInt(date.substring(4)) - 1), y: parseInt(value) });
+        }
+        series3.push(arrToPush);
+    }
+
+
+    return series3;
+}
+
+
 //Used to reconstruct graph every 5 seconds, it'll call the above function (SentimentData) to poll the flask server for new data
 //and update the chart accordingly
 var interval = setInterval(() => {
@@ -249,4 +276,32 @@ var interval = setInterval(() => {
 
         return chart;
     });
+
+    nv.addGraph(function () {
+        var chart = nv.models.lineChart();
+
+        chart.xAxis
+            .axisLabel("Date")
+            .tickFormat(function (d) {
+                return d3.time.format('%x')(new Date(d))
+            });
+
+        chart.yAxis
+            .axisLabel("Word Count")
+            .tickFormat(d3.format("d"))
+            ;
+
+        d3.select("#wordCountPlot")
+            .datum(wordCountData())
+            .transition().duration(500).call(chart);
+
+        nv.utils.windowResize(
+            function () {
+                chart.update();
+            }
+        );
+
+        return chart;
+    });
+
 }, 5000);
