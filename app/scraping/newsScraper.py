@@ -91,7 +91,7 @@ def scrape_news(queue, month_from, year_from, month_to, year_to, genres, killEve
     dc = articles_df[['Month/Year', 'Content']]
     games_df = pd.read_csv("steam_games.csv")
     # selection criteria (genre, game, or some other parameter to be passed onto the scrapers, selection_criteria = [column_name, value])
-    games_df = games_df[[genre in genres for genre in games_df["genre"]]]
+    #games_df = games_df[[genre in genres for genre in games_df["genre"]]]
 
     for row in games_df.itertuples():
         if killEvent.is_set():

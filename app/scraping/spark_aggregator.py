@@ -57,7 +57,7 @@ def comb_op(accumulator1, accumulator2):
 
 # filter for streams that are actually articles by checking if the string has wc in it
 usefuldata = articles.filter(lambda article: "wc" in article).map(
-    lambda article: (json.loads(article)["month"], (int(
+    lambda article: (str(json.loads(article)["genre"]) + "," + str(json.loads(article)["year"]) + str(json.loads(article)["month"]), (int(
         json.loads(article)["wc"]), float(json.loads(article)["sentiment"]))))
 # usefuldata now contains a list of all the month, sentiment and wordcount pairs
 
@@ -70,7 +70,7 @@ total_sentiment_rdd = usefuldata.transform(
     ))
 
 ytViewsData_rdd = articles.filter(lambda article: "likes" in article).map(
-    lambda article: (str(json.loads(article)["year"]) + str(json.loads(article)["month"]), int(
+    lambda article: (str(json.loads(article)["genre"]) + "~" + str(json.loads(article)["year"]) + str(json.loads(article)["month"]), int(
         json.loads(article)["views"])))
 
 # add the previous sentiment and wordocunt values with the new values
@@ -129,8 +129,8 @@ views_total = ytViewsData_rdd.updateStateByKey(aggregate_views_count)
 
 def send_results_to_flask(result):
     url = "http://127.0.0.1:5000/UpdateSentiment"
-    request_data = {'label': '{}'.format(
-        result[0]), 'data': str(result[1])}  # , result[1][1])}
+    # , result[1][1])}
+    request_data = {'label': str(result[0]), 'data': str(result[1])}
     response = requests.post(url, data=request_data)
     return response.status_code
 
@@ -151,12 +151,12 @@ def process_interval(time, rdd):
         for el in sentiments:
             # el[0] =  a single number mm representing the month for news datastream
             # and a number like yyyymm representing the year and month for youtube stream
-            if type(el[0]) is int:
+            if "~" not in el[0]:
                 print('{} {} {}'.format(el[0], el[1][0], el[1][1]))
                 send_results_to_flask(el)
             else:
                 print('{} {}'.format(el[0], el[1]))
-                # send_views_to_flask(el)
+                send_views_to_flask(el)
             # formula for total sentiment weighting
             # its all about the weights, for each game
             # game sentiment += (gamewc in article) / (total word count for all articles in month) * article sentiment

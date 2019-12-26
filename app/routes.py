@@ -14,11 +14,18 @@ from flask_cors import CORS, cross_origin
 #from app.scraping import scraping
 import ast
 
+# new strategy, values will come in as genre,date: views, split on the comma and genre will be used to index to a dictionary
+# this dictioanry will have a list with {date: views} pairs, for each new data do the following
+# append the date:views pairs to the dictionary
+# send this to the frontend
+
 cors = CORS(application)
 application.config['CORS_HEADERS'] = 'Content-Type'
 global Sentiments
-Sentiments = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0,
-              6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}
+# Sentiments = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0,
+# 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}
+Sentiments = {}
+Views = {}
 # we want a list of dictionaries instead, of the form
 #[{x:1 , y:0}, {x:2, y:0}]
 
@@ -32,6 +39,13 @@ def convertToList(dictionary):
     return returnList
 
 
+def convertViewsToList(dictionary):
+    returnList = {"Dates": []}
+    for i in dictionary.keys():
+        returnList["Dates"].append({"x": i, "y": dictionary[i]})
+    return returnList
+
+
 @application.route('/')
 @application.route('/index')
 def index():
@@ -41,28 +55,84 @@ def index():
 @application.route('/GetSentiment', methods=['GET'])
 @cross_origin()
 def handleGetSentiment():
-    toSend = convertToList(Sentiments)
+    toSend = Sentiments
     message = {
         'status': 200,
         'message': 'Ok',
         'sentiments': toSend
     }
 
-    return jsonify(message["sentiments"]["sents"])
+    return jsonify(message["sentiments"])
+
+# Called by frontend to get new total views data, fromat currently is yyyymm, will get converted to a proper date on the front end
+@application.route('/GetViews', methods=['GET'])
+@cross_origin()
+def handleGetViews():
+    toSend = Views
+    message = {
+        'status': 200,
+        'message': 'Ok',
+        'dates': toSend
+    }
+
+    return jsonify(message["dates"])
+
+# # updated by spark with new values as they arrive, it modifies a global disctionary
+# # called Sentiments which is of the form {"month": sentiment}
+# @application.route('/UpdateSentiment', methods=['POST'])
+# def handleUpdateSentiment():
+#     global month, values
+#     if not request.form or 'data' not in request.form:
+#         return "error", 400
+#     month = ast.literal_eval(request.form['label'])
+#     values = ast.literal_eval(request.form['data'])
+#     #Sentiments[i] = sentiment/wordcount
+#     Sentiments[month] = float(values[1]) / int(values[0])
+#     print("labels received: " + str(month))
+#     print("data received: " + str(values))
+#     return "success", 201
 
 # updated by spark with new values as they arrive, it modifies a global disctionary
 # called Sentiments which is of the form {"month": sentiment}
+# modified for new genre based key
 @application.route('/UpdateSentiment', methods=['POST'])
 def handleUpdateSentiment():
     global month, values
     if not request.form or 'data' not in request.form:
         return "error", 400
-    month = ast.literal_eval(request.form['label'])
+    genremonth = request.form['label']
     values = ast.literal_eval(request.form['data'])
     #Sentiments[i] = sentiment/wordcount
-    Sentiments[month] = float(values[1]) / int(values[0])
-    print("labels received: " + str(month))
-    print("data received: " + str(values))
+    genre = genremonth.split(',')[0]
+    date = genremonth.split(',')[1]
+    if genre not in Sentiments.keys():
+        Sentiments[genre] = {date: float(values[1]) / int(values[0])}
+    else:
+        Sentiments[genre][date] = float(values[1]) / int(values[0])
+
+    print("labels received: " + str(genre))
+    print("data received: " + str(float(values[1]) / int(values[0])))
+    return "success", 201
+
+# updated by spark with new values as they arrive, it modifies a global disctionary
+# called Sentiments which is of the form {"month": sentiment}
+@application.route('/UpdateViews', methods=['POST'])
+def handleUpdateViews():
+    global month, values2
+    if not request.form or 'data' not in request.form:
+        return "error", 400
+    genremonth = request.form['label']
+    values2 = ast.literal_eval(request.form['data'])
+    #Sentiments[i] = sentiment/wordcount
+    genre = genremonth.split('~')[0]
+    date = genremonth.split('~')[1]
+    if genre not in Views.keys():
+        Views[genre] = {date: int(values2)}
+    else:
+        Views[genre][date] = int(values2)
+
+    print("labels received: " + str(genre))
+    print("data received: " + str(values2))
     return "success", 201
 
 # This function will be used to update the requirements from the front end, will work on this once we can figure ot how to get

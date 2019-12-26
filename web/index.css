@@ -6,16 +6,25 @@
 }
 
 #sentimentPlot{
-	position: absolute;
-	margin-right: 100px;
+	/*position: absolute;
+	margin-right: 100px;*/
 	height: 400px;
-	width: 400px;
-	right: 550px;
-	top: 100px
+	width: 800px;
+	/*right: 550px;
+	top: 500px*/
 }
 
-#sentimentid{
+#viewsPlot{
+	/*position: absolute;
+	margin-right: 100px;*/
+	height: 400px;
+	width: 800px;
+	/*right: 550px;
+	top: 500px*/
+}
+
+/*#sentimentid{
 	position: absolute;
 	right: 550px;
 	top: 0px
-}
+}*/

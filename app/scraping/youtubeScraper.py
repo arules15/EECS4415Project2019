@@ -101,7 +101,7 @@ def scrape_youtube(queue, videos_per_game, genres, kill_event):
     # for each game in the dataset, scrape videos about those games
     games_df = pd.read_csv("steam_games.csv")
     # selection criteria (genre, game, or some other parameter to be passed onto the scrapers, selection_criteria = [column_name, value])
-    games_df = games_df[[genre in genres for genre in games_df["genre"]]]
+    #games_df = games_df[[genre in genres for genre in games_df["genre"]]]
 
     for row in games_df.itertuples():
         def scrape(page):
@@ -147,7 +147,8 @@ def scrape_youtube(queue, videos_per_game, genres, kill_event):
                             dislikes = more_data.dislike
                             views = more_data.views
                             published = more_data.published
-                            date = published.lower().replace(',', '').replace('streamed live on ', '').replace('premiered ', '')
+                            date = published.lower().replace(',', '').replace(
+                                'streamed live on ', '').replace('premiered ', '')
                             date_pub = datetime.datetime.strptime(
                                 date, "%b %d %Y")
                             json_object = {"month": date_pub.strftime("%m"), "year": date_pub.strftime(
