@@ -61,7 +61,7 @@ function sentimentData() {
         arrToPush.key = gen;
         arrToPush.values = []
         for (const [date, value] of Object.entries(sentiment[gen])) {
-            arrToPush.values.push({ x: new Date(parseInt(date.substring(0, 4)), parseInt(date.substring(4)) - 1), y: value });
+            arrToPush.values.push({ x: new Date(parseInt(date.substring(0, 4)), parseInt(date.substring(4)) - 1), y: parseFloat(value) });
         }
         series3.push(arrToPush);
     }
@@ -150,7 +150,7 @@ function viewsData() {
         arrToPush.key = gen;
         arrToPush.values = []
         for (const [date, value] of Object.entries(views[gen])) {
-            arrToPush.values.push({ x: new Date(parseInt(date.substring(0, 4)), parseInt(date.substring(4)) - 1), y: value });
+            arrToPush.values.push({ x: new Date(parseInt(date.substring(0, 4)), parseInt(date.substring(4)) - 1), y: parseInt(value) });
         }
         series3.push(arrToPush);
     }
@@ -162,32 +162,32 @@ function viewsData() {
 //Used to reconstruct graph every 5 seconds, it'll call the above function (SentimentData) to poll the flask server for new data
 //and update the chart accordingly
 var interval = setInterval(() => {
+    // nv.addGraph(function () {
+    //     var chart = nv.models.lineChart();
+
+    //     chart.xAxis
+    //         .axisLabel("X-axis Label");
+
+    //     chart.yAxis
+    //         .axisLabel("Y-axis Label")
+    //         .tickFormat(d3.format("d"))
+    //         ;
+
+    //     d3.select("#series1")
+    //         .datum(myData())
+    //         .transition().duration(500).call(chart);
+
+    //     nv.utils.windowResize(
+    //         function () {
+    //             chart.update();
+    //         }
+    //     );
+
+    //     return chart;
+    // });
+
     nv.addGraph(function () {
         var chart = nv.models.lineChart();
-
-        chart.xAxis
-            .axisLabel("X-axis Label");
-
-        chart.yAxis
-            .axisLabel("Y-axis Label")
-            .tickFormat(d3.format("d"))
-            ;
-
-        d3.select("#series1")
-            .datum(myData())
-            .transition().duration(500).call(chart);
-
-        nv.utils.windowResize(
-            function () {
-                chart.update();
-            }
-        );
-
-        return chart;
-    });
-
-    nv.addGraph(function () {
-        var chart = nv.models.cumulativeLineChart();
 
         var mindate = new Date(2012, 1, 1);
         var maxdate = new Date(2019, 11, 30);
@@ -195,14 +195,14 @@ var interval = setInterval(() => {
         var xScale = d3.time.scale();//.domain([mindate, maxdate]);
 
         chart.xAxis
-            .axisLabel("X-axis Label")
+            .axisLabel("Date")
             .tickFormat(function (d) {
                 return d3.time.format('%x')(new Date(d))
             });
 
         chart.yAxis
-            .axisLabel("Y-axis Label")
-            .tickFormat(d3.format("d"))
+            .axisLabel("Sentiment")
+            .tickFormat(d3.format(".02f"))
             ;
 
         d3.select("#sentimentPlot")
@@ -219,7 +219,7 @@ var interval = setInterval(() => {
     });
 
     nv.addGraph(function () {
-        var chart = nv.models.cumulativeLineChart();
+        var chart = nv.models.lineChart();
 
         var mindate = new Date(2012, 1, 1);
         var maxdate = new Date(2019, 11, 30);
@@ -227,13 +227,13 @@ var interval = setInterval(() => {
         var xScale = d3.time.scale();//.domain([mindate, maxdate]);
 
         chart.xAxis
-            .axisLabel("X-axis Label")
+            .axisLabel("Date")
             .tickFormat(function (d) {
                 return d3.time.format('%x')(new Date(d))
             });
 
         chart.yAxis
-            .axisLabel("Y-axis Label")
+            .axisLabel("Views")
             .tickFormat(d3.format("d"))
             ;
 
